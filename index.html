@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Savings Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0a0a0f;
+      color: #e8e8f0;
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+    }
+    #app {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    /* Header */
+    .header-eyebrow { font-size: 12px; color: #555; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+    .header-title { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+    .header-date { font-size: 12px; color: #555; margin-top: 2px; margin-bottom: 24px; }
+
+    /* Summary card */
+    .summary-card {
+      background: linear-gradient(135deg, #13131f 0%, #1a1a2e 100%);
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 24px;
+      border: 1px solid #2a2a3e;
+    }
+    .summary-eyebrow { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+    .summary-total { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 12px; }
+    .summary-stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+    .stat-label { font-size: 10px; color: #555; text-transform: uppercase; }
+    .stat-value { font-size: 15px; font-weight: 600; }
+
+    /* Monthly bar */
+    .monthly-bar {
+      background: #0a0a0f;
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .monthly-bar-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.08em; }
+    .monthly-bar-stats { display: flex; justify-content: space-between; margin-bottom: 10px; }
+    .monthly-bar-stat { }
+    .monthly-bar-stat.center { text-align: center; }
+    .monthly-bar-stat.right { text-align: right; }
+    .progress-track { background: #1e1e2e; border-radius: 6px; height: 6px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #4ade80, #facc15); }
+
+    /* Section labels */
+    .section-label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; margin-top: 4px; }
+
+    /* Cards */
+    .card {
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+    .logo {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; flex-shrink: 0;
+    }
+    .logo-sm { font-size: 12px; }
+    .logo-lg { font-size: 18px; }
+    .card-bank { font-weight: 700; font-size: 15px; }
+    .card-meta { font-size: 12px; color: #666; }
+    .badge {
+      font-size: 11px; border-radius: 6px; padding: 3px 8px;
+      white-space: nowrap;
+    }
+    .platform-badge {
+      font-size: 10px; font-weight: 600; border-radius: 4px; padding: 1px 5px; margin-left: 6px;
+    }
+
+    /* Progress ring area */
+    .card-body { display: flex; align-items: center; gap: 20px; margin-bottom: 18px; }
+    .ring-wrap { position: relative; flex-shrink: 0; }
+    .ring-label {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .ring-pct { font-size: 22px; font-weight: 800; }
+    .ring-days { font-size: 10px; color: #666; }
+    .mini-stats { flex: 1; }
+    .mini-stat { margin-bottom: 8px; }
+    .mini-stat-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.07em; }
+    .mini-stat-value { font-size: 14px; font-weight: 700; }
+
+    /* Bottom bar */
+    .card-footer {
+      display: flex; justify-content: space-between;
+      background: #0a0a0f; border-radius: 10px; padding: 10px 14px;
+    }
+    .footer-item { }
+    .footer-item.right { text-align: right; }
+    .footer-item.center { text-align: center; }
+    .footer-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.07em; }
+    .footer-value { font-size: 14px; font-weight: 700; }
+
+    /* Demand card specifics */
+    .balance-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 14px; }
+    .balance-label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
+    .balance-value { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+    .aer-label { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 2px; }
+    .aer-value { font-size: 20px; font-weight: 700; }
+    .interest-row { display: flex; justify-content: space-between; padding: 6px 0; }
+    .interest-date { font-size: 13px; color: #888; }
+    .interest-amount { font-size: 13px; font-weight: 600; color: #4ade80; }
+
+    /* Footer note */
+    .footer-note { text-align: center; font-size: 11px; color: #333; margin-top: 8px; }
+
+    /* Colors */
+    .green { color: #4ade80; }
+    .yellow { color: #facc15; }
+    .white { color: #e8e8f0; }
+    .muted { color: #aaa; }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+
+const DEMAND_ACCOUNTS = [
+  {
+    id: "resurs",
+    bank: "Resurs Bank",
+    country: "Sweden",
+    rating: "AAA",
+    ratingColor: "#4ade80",
+    balance: 510.16,
+    aer: 0.0205,
+    accent: "#34d399",
+    logo: "R",
+    logoBg: "#065f46",
+    logoColor: "#fff",
+    platform: "Raisin",
+  },
+  {
+    id: "traderepublic",
+    bank: "Trade Republic",
+    country: "Germany",
+    rating: "N/A",
+    ratingColor: "#888",
+    balance: 50917.91,
+    aer: 0.02,
+    totalInterestPaid: 3854,
+    accent: "#a78bfa",
+    logo: "TR",
+    logoBg: "#1e1040",
+    logoColor: "#a78bfa",
+    platform: "Trade Republic",
+    lastInterest: [
+      { date: "01 Jun", amount: 84.93 },
+      { date: "01 May", amount: 82.19 },
+      { date: "01 Apr", amount: 84.93 },
+    ],
+  },
+];
+
+const DEPOSITS = [
+  {
+    id: "klarna",
+    bank: "Klarna Bank",
+    country: "Sweden",
+    rating: "AAA",
+    ratingColor: "#4ade80",
+    principal: 66667,
+    aer: 0.026,
+    startDate: new Date("2026-06-11"),
+    endDate: new Date("2027-06-11"),
+    termLabel: "1 Year",
+    accent: "#FFB3C7",
+    logo: "K",
+    logoBg: "#FFB3C7",
+    logoColor: "#1a1a2e",
+    noWithholding: true,
+    platform: "Klarna",
+  },
+  {
+    id: "ca",
+    bank: "CA Auto Bank",
+    country: "Italy",
+    rating: "BBB+",
+    ratingColor: "#facc15",
+    principal: 42000.23,
+    aer: 0.0241,
+    startDate: new Date("2026-01-10"),
+    endDate: new Date("2026-07-10"),
+    termLabel: "6 Months",
+    accent: "#60a5fa",
+    logo: "CA",
+    logoBg: "#1d4ed8",
+    logoColor: "#fff",
+    noWithholding: false,
+    platform: "Raisin",
+  },
+];
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+
+function today() { return new Date(); }
+
+function getDaysPassed(start, end) {
+  const now = today();
+  const totalDays = Math.round((end - start) / 864e5);
+  const passed = Math.max(0, Math.min(totalDays, Math.round((now - start) / 864e5)));
+  return { passed, totalDays };
+}
+
+function calcInterest(principal, aer, totalDays) {
+  return principal * aer * (totalDays / 365);
+}
+
+function euro(n) {
+  return new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR" }).format(n);
+}
+
+function fmtDate(d) {
+  return d.toLocaleDateString("en-IE", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function platformStyle(platform) {
+  if (platform === "Raisin") return "background:#7c3aed22;color:#a78bfa";
+  if (platform === "Klarna") return "background:#FFB3C722;color:#FFB3C7";
+  return "background:#1e104044;color:#a78bfa";
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+
+function depositCardHTML(dep) {
+  const { passed, totalDays } = getDaysPassed(dep.startDate, dep.endDate);
+  const totalInterest = calcInterest(dep.principal, dep.aer, totalDays);
+  const progress = passed / totalDays;
+  const earned = totalInterest * progress;
+  const remaining = totalInterest - earned;
+  const currentValue = dep.principal + earned;
+  const dailyRate = totalInterest / totalDays;
+  const isMatured = today() >= dep.endDate;
+
+  const radius = 54;
+  const circ = 2 * Math.PI * radius;
+  const dash = circ * Math.min(progress, 1);
+  const ringColor = isMatured ? "#4ade80" : dep.accent;
+
+  const badgeHTML = isMatured
+    ? `<span class="badge" style="background:#4ade8022;color:#4ade80">Matured</span>`
+    : `<span class="badge" style="background:${dep.accent}22;color:${dep.accent}">${dep.termLabel}</span>`;
+
+  return `
+  <div class="card" style="background:#13131f;border:1px solid ${dep.accent}22">
+    <div class="card-header">
+      <div class="logo ${dep.logo.length > 1 ? 'logo-sm' : 'logo-lg'}"
+           style="background:${dep.logoBg};color:${dep.logoColor}">${dep.logo}</div>
+      <div style="flex:1">
+        <div class="card-bank">${dep.bank}</div>
+        <div class="card-meta">${dep.country} ·
+          <span style="color:${dep.ratingColor};margin-left:4px">${dep.rating}</span>
+          ${dep.noWithholding ? '<span style="color:#4ade80;margin-left:6px">· No WHT</span>' : ''}
+          <span class="platform-badge" style="${platformStyle(dep.platform)}">${dep.platform}</span>
+        </div>
+      </div>
+      ${badgeHTML}
+    </div>
+
+    <div class="card-body">
+      <div class="ring-wrap">
+        <svg width="130" height="130" style="transform:rotate(-90deg)">
+          <circle cx="65" cy="65" r="${radius}" fill="none" stroke="#1e1e2e" stroke-width="10"/>
+          <circle cx="65" cy="65" r="${radius}" fill="none"
+            stroke="${ringColor}" stroke-width="10" stroke-linecap="round"
+            stroke-dasharray="${dash} ${circ}"/>
+        </svg>
+        <div class="ring-label">
+          <div class="ring-pct" style="color:${ringColor}">${Math.round(progress * 100)}%</div>
+          <div class="ring-days">${passed}d/${totalDays}d</div>
+        </div>
+      </div>
+      <div class="mini-stats">
+        <div class="mini-stat"><div class="mini-stat-label">Principal</div><div class="mini-stat-value">${euro(dep.principal)}</div></div>
+        <div class="mini-stat"><div class="mini-stat-label">Earned so far</div><div class="mini-stat-value green">${euro(earned)}</div></div>
+        <div class="mini-stat"><div class="mini-stat-label">Current value</div><div class="mini-stat-value" style="color:${dep.accent}">${euro(currentValue)}</div></div>
+        <div class="mini-stat"><div class="mini-stat-label">${isMatured ? 'Total earned' : 'Still to earn'}</div><div class="mini-stat-value yellow">${euro(isMatured ? totalInterest : remaining)}</div></div>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <div class="footer-item">
+        <div class="footer-label">Daily</div>
+        <div class="footer-value green">${euro(dailyRate)}/day</div>
+      </div>
+      <div class="footer-item center">
+        <div class="footer-label">AER</div>
+        <div class="footer-value" style="color:${dep.accent}">${(dep.aer * 100).toFixed(2)}%</div>
+      </div>
+      <div class="footer-item right">
+        <div class="footer-label">${isMatured ? 'Matured' : 'Matures'}</div>
+        <div class="footer-value muted">${fmtDate(dep.endDate)}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function demandCardHTML(acc) {
+  const dailyRate = (acc.balance * acc.aer) / 365;
+
+  const totalInterestHTML = acc.totalInterestPaid
+    ? `<div style="margin-bottom:14px">
+        <div class="mini-stat-label" style="font-size:11px;margin-bottom:4px">Total Interest Paid</div>
+        <div style="font-size:18px;font-weight:700;color:#4ade80">${euro(acc.totalInterestPaid)}</div>
+       </div>` : '';
+
+  const recentInterestHTML = acc.lastInterest
+    ? `<div style="margin-bottom:14px">
+        <div class="mini-stat-label" style="font-size:11px;margin-bottom:8px">Recent Interest</div>
+        ${acc.lastInterest.map((tx, i) =>
+          `<div class="interest-row" style="${i < acc.lastInterest.length - 1 ? 'border-bottom:1px solid #1e1e2e' : ''}">
+            <span class="interest-date">${tx.date}</span>
+            <span class="interest-amount">+${euro(tx.amount)}</span>
+          </div>`
+        ).join('')}
+       </div>` : '';
+
+  return `
+  <div class="card" style="background:#13131f;border:1px solid ${acc.accent}22">
+    <div class="card-header">
+      <div class="logo ${acc.logo.length > 1 ? 'logo-sm' : 'logo-lg'}"
+           style="background:${acc.logoBg};color:${acc.logoColor}">${acc.logo}</div>
+      <div style="flex:1">
+        <div class="card-bank">${acc.bank}</div>
+        <div class="card-meta">${acc.country} ·
+          <span style="color:${acc.ratingColor};margin-left:4px">${acc.rating}</span>
+          <span class="platform-badge" style="${platformStyle(acc.platform)}">${acc.platform}</span>
+        </div>
+      </div>
+      <span class="badge" style="background:${acc.accent}22;color:${acc.accent}">Demand</span>
+    </div>
+
+    <div class="balance-row">
+      <div>
+        <div class="balance-label">Current Balance</div>
+        <div class="balance-value" style="color:${acc.accent}">${euro(acc.balance)}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="aer-label">AER</div>
+        <div class="aer-value" style="color:${acc.accent}">${(acc.aer * 100).toFixed(2)}%</div>
+      </div>
+    </div>
+
+    ${totalInterestHTML}
+    ${recentInterestHTML}
+
+    <div class="card-footer">
+      <div class="footer-item">
+        <div class="footer-label">Daily accrual</div>
+        <div class="footer-value green">${euro(dailyRate)}/day</div>
+      </div>
+      <div class="footer-item right">
+        <div class="footer-label">Type</div>
+        <div class="footer-value muted">Instant access</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function render() {
+  const now = today();
+
+  // Portfolio totals
+  const depositTotals = DEPOSITS.reduce((acc, dep) => {
+    const { passed, totalDays } = getDaysPassed(dep.startDate, dep.endDate);
+    const totalInterest = calcInterest(dep.principal, dep.aer, totalDays);
+    const progress = passed / totalDays;
+    const earned = totalInterest * progress;
+    return { principal: acc.principal + dep.principal, earned: acc.earned + earned, total: acc.total + dep.principal + earned };
+  }, { principal: 0, earned: 0, total: 0 });
+
+  const demandBalance = DEMAND_ACCOUNTS.reduce((s, a) => s + a.balance, 0);
+
+  const totals = {
+    principal: depositTotals.principal + demandBalance,
+    earned: depositTotals.earned,
+    total: depositTotals.total + demandBalance,
+  };
+
+  const totalDailyReturn =
+    DEPOSITS.reduce((sum, dep) => {
+      const { totalDays } = getDaysPassed(dep.startDate, dep.endDate);
+      return sum + calcInterest(dep.principal, dep.aer, totalDays) / totalDays;
+    }, 0) +
+    DEMAND_ACCOUNTS.reduce((sum, acc) => sum + (acc.balance * acc.aer) / 365, 0);
+
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const dayOfMonth = now.getDate();
+  const daysElapsed = dayOfMonth - 1;
+  const monthLabel = now.toLocaleDateString("en-IE", { month: "long", year: "numeric" });
+  const totalMonthly = totalDailyReturn * daysInMonth;
+  const earnedMonth = totalDailyReturn * daysElapsed;
+  const remainMonth = totalMonthly - earnedMonth;
+  const monthPct = (daysElapsed / daysInMonth) * 100;
+
+  document.getElementById("app").innerHTML = `
+    <div class="header-eyebrow">Savings Portfolio</div>
+    <div class="header-title">Savings Tracker</div>
+    <div class="header-date">As of ${fmtDate(now)}</div>
+
+    <div class="summary-card">
+      <div class="summary-eyebrow">Total Portfolio</div>
+      <div class="summary-total">${euro(totals.total)}</div>
+      <div class="summary-stats">
+        <div>
+          <div class="stat-label">Invested</div>
+          <div class="stat-value">${euro(totals.principal)}</div>
+        </div>
+        <div>
+          <div class="stat-label">Earned</div>
+          <div class="stat-value green">+${euro(totals.earned)}</div>
+        </div>
+        <div>
+          <div class="stat-label">Daily Return</div>
+          <div class="stat-value yellow">+${euro(totalDailyReturn)}/day</div>
+        </div>
+        <div>
+          <div class="stat-label">Accounts</div>
+          <div class="stat-value">4 active</div>
+        </div>
+      </div>
+
+      <div class="monthly-bar">
+        <div class="monthly-bar-header">
+          <span>${monthLabel}</span>
+          <span>${daysElapsed} / ${daysInMonth} days</span>
+        </div>
+        <div class="monthly-bar-stats">
+          <div class="monthly-bar-stat">
+            <div class="stat-label">Earned so far</div>
+            <div style="font-size:16px;font-weight:700;color:#4ade80">+${euro(earnedMonth)}</div>
+          </div>
+          <div class="monthly-bar-stat center">
+            <div class="stat-label">Full month</div>
+            <div style="font-size:16px;font-weight:700;color:#e8e8f0">${euro(totalMonthly)}</div>
+          </div>
+          <div class="monthly-bar-stat right">
+            <div class="stat-label">Still to earn</div>
+            <div style="font-size:16px;font-weight:700;color:#facc15">+${euro(remainMonth)}</div>
+          </div>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width:${monthPct}%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">Fixed Deposits</div>
+    ${DEPOSITS.map(depositCardHTML).join('')}
+
+    <div class="section-label">Demand Deposits</div>
+    ${DEMAND_ACCOUNTS.map(demandCardHTML).join('')}
+
+    <div class="footer-note">Raisin · Klarna · Trade Republic · Ireland · DIRT may apply</div>
+  `;
+}
+
+// Initial render + refresh every 60s
+render();
+setInterval(render, 60000);
+</script>
+</body>
+</html>
